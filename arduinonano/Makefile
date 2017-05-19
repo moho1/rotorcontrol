@@ -9,7 +9,7 @@ program: ${PROGNAME}.hex
 	avrdude -p m328p -P /dev/ttyUSB0 -c arduino -b 57600 -F -u -U flash:w:$<
 
 %.hex: %.elf
-	avr-objcopy -O ihex -R .eeprom $< $<.hex
+	avr-objcopy -O ihex -R .eeprom $< $@
 
 %.elf: %.c %.h
 	${CC} ${CFLAGS} -o $@ $<

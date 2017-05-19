@@ -97,7 +97,17 @@
 #define AZ_MAXSTEPS (180 * AZ_SCALE)
 #define EL_MAXSTEPS (40 * EL_SCALE)
 
+// Max tickcounter, needed for speedcontrol
+#define TICKCOUNT_MAX 100
+
 uint8_t gray2bin[4] = { 0b00, 0b01, 0b11, 0b10 };
+
+/* Speed tables */
+#define MAXSPEED 5
+// Min difference to engage higher speed
+uint16_t speedsteps[MAXSPEED+1] = { 0, 1, 10, 50, 200, 1000 };
+// Speed for each difference step
+uint16_t speedpresets[MAXSPEED+1] = {0, 10, 50, 100, 200, 255};
 
 /* Variables */
 
@@ -110,14 +120,19 @@ typedef struct {
 	int16_t azsteps_want;
 	int16_t elsteps_want;
 	
+	/* moveticks is currently unused */
 	// Ticks since last degree change
-	uint16_t az_moveticks;
-	uint16_t el_moveticks;
-	
+	//uint16_t az_moveticks;
+	//uint16_t el_moveticks;
+	//
 	// As above, but old value
 	// Usable as speed indicator
-	uint16_t az_moveticks_old;
-	uint16_t el_moveticks_old;
+	//uint16_t az_moveticks_old;
+	//uint16_t el_moveticks_old;
+	
+	// Current speedstep
+	uint8_t az_speed;
+	uint8_t el_speed;
 	
 	// Last move direction
 	int8_t az_movedir;
@@ -132,6 +147,9 @@ typedef struct {
 	uint8_t el_bin_old;
 	uint8_t el_gray;
 	uint8_t el_bin;
+	
+	// Tick counter, needed for speed control
+	uint8_t tickcount;
 } rotorstate_t;
 
 rotorstate_t rotorstate;
@@ -141,10 +159,10 @@ void setuprotor(void);
 void home(void);
 void homeaz(void);
 void homeel(void);
-void engage_az(uint8_t);
-void stop_az(void);
-void engage_el(uint8_t);
-void stop_el(void);
+void set_azspeed(uint8_t);
+void set_azdir(int8_t);
+void set_elspeed(uint8_t);
+void set_eldir(int8_t);
 void setuppins(void);
 int sign(int);
 
