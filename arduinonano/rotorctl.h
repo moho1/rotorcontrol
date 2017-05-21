@@ -166,6 +166,7 @@ rotorstate_t rotorstate;
 
 int main(void);
 void easycomm();
+uint8_t read_cmd(void);
 void usart_init(void);
 void usart_transmit(uint8_t);
 uint8_t usart_receive(void);
