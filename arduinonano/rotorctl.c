@@ -50,6 +50,7 @@ void setuprotor(void) {
 	OCR1AH = (uint8_t)(0); // Compare trigger after 8 counts
 	OCR1AL = (uint8_t)(8);
 	TIMSK1 |= 1<<OCIE1A; // Enable compare interrupt TIMER1_COMP_vect
+	SREG |= (1<<SREG_I); // Global Interupt enable
 }
 
 /* This ISR is setup in setuprotor and called all 0.128ms.
