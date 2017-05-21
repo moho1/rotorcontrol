@@ -8,8 +8,41 @@ int main(void) {
 	setuppins();
 	home();
 	setuprotor();
-	while (1);
+	easycomm();
 	return 0;
+}
+
+void easycomm() {
+	usart_init();
+	// Testing the usart
+	while(1) {
+		usart_transmit(usart_receive());
+	}
+}
+
+void usart_init(void) {
+	/* Setup serial port */
+	// Setup speed
+	UBRR0H = (uint8_t)(MYUBRR>>8);
+	UBRR0L = (uint8_t)(MYUBRR);
+	
+	// Set frame format: 8N1
+	UCSR0C = (1<<UCSZ00) | (1<<UCSZ01);
+	
+	// Enable receiver and transmitter
+	UCSR0B = (1<<RXEN0) | (1<<TXEN0);
+}
+
+void usart_transmit(uint8_t data) {
+	// Wait for empty transmit buffer
+	while(!(UCSR0A & (1<<UDRE0)));
+	UDR0 = data;
+}
+
+uint8_t usart_receive(void) {
+	// Wait for new frame
+	while(!(UCSR0A & (1<<RXC0)));
+	return UDR0;
 }
 
 void setuprotor(void) {
@@ -21,7 +54,7 @@ void setuprotor(void) {
 
 /* This ISR is setup in setuprotor and called all 0.128ms.
    It reads the encoder positions and updates our knowledge of the rotor position.
-   It also cares about engagind / disengaging the rotor.
+   It also cares about engaging / disengaging the rotor and controlling the speed.
  */
 
 ISR( TIMER1_COMPA_vect ) {
@@ -175,7 +208,8 @@ void set_azspeed(uint8_t speed) {
 	if (speed > 0) {
 		AZ_BRK_PORT &= ~(1<<AZ_DIR_NUM);
 	}
-	// set pwm cycle to speedpreset[speed]
+	//TODO: handle speed=0 special
+	OCR0A = speedpreset[speed];
 	if (speed == 0) {
 		AZ_BRK_PORT |= (1<<AZ_DIR_NUM);
 	}
@@ -194,7 +228,8 @@ void set_elspeed(uint8_t speed) {
 	if (speed > 0) {
 		EL_BRK_PORT &= ~(1<<EL_DIR_NUM);
 	}
-	// set pwm cycle to speedpreset[speed]
+	//TODO: handle speed=0 special
+	OCR2A = speedpreset[speed];
 	if (speed == 0) {
 		EL_BRK_PORT |= (1<<EL_DIR_NUM);
 	}
@@ -239,6 +274,19 @@ void setuppins(void) {
 	EL_PWM_PORT &= ~(1<<EL_PWM_NUM);
 	
 	/* Now all outputs should be turned off and the breaks fastend */
+	
+	/* Setup PWM for AZ/EL driver */
+	// TIMER0 for AZ
+	// non-inverting OC0A, Fast PWM, reset at OCR0A
+	TCCR0A = (1<<COM0A1) | (1<<WGM01) | (1<<WGM00);
+	// Clock divisor 1024 => ~all 10ms reset
+	TCCR0B = (1<<CS02) | (1<<CS00);
+	
+	// TIMER2 for EL
+	// non-inverting OC2A, Fast PWM, reset at OCR2A
+	TCCR2A = (1<<COM2A1) | (1<<WGM21) | (1<<WGM20);
+	// Clock divisor 1024 => ~all 10ms reset
+	TCCR2B = (1<<CS22) | (1<<CS21) | (1<<CS20);
 }
 
 int sign(int x) {

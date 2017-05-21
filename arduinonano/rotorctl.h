@@ -29,39 +29,34 @@
 #define EL_A_PIN PIND
 #define EL_A_NUM 5
 
-// EL B: Pin D6
+// EL B: Pin D7
 #define EL_B_PORT PORTD
 #define EL_B_DDR DDRD
 #define EL_B_PIN PIND
-#define EL_B_NUM 6
+#define EL_B_NUM 7
 
-// EL endswitch: D7
-#define EL_SW_PORT PORTD
-#define EL_SW_DDR DDRD
-#define EL_SW_PIN PIND
-#define EL_SW_NUM 7
+// EL endswitch: D8
+#define EL_SW_PORT PORTB
+#define EL_SW_DDR DDRB
+#define EL_SW_PIN PINB
+#define EL_SW_NUM 0
 
 /* Driver outputs */
 
-// AZ direction: D8
+// AZ direction: D9
 #define AZ_DIR_PORT PORTB
 #define AZ_DIR_DDR DDRB
-#define AZ_DIR_NUM 0
+#define AZ_DIR_NUM 1
 
-// AZ break: D9
+// AZ break: D10
 #define AZ_BRK_PORT PORTB
 #define AZ_BRK_DDR DDRB
-#define AZ_BRK_NUM 1
+#define AZ_BRK_NUM 2
 
-// AZ PWM: D10
-#define AZ_PWM_PORT PORTB
-#define AZ_PWM_DDR DDRB
-#define AZ_PWM_NUM 2
-
-// EL PWM: D11
-#define EL_PWM_PORT PORTB
-#define EL_PWM_DDR DDRB
-#define EL_PWM_NUM 3
+// AZ PWM: D6
+#define AZ_PWM_PORT PORTD
+#define AZ_PWM_DDR DDRD
+#define AZ_PWM_NUM 6
 
 // EL break: D12
 #define EL_BRK_PORT PORTB
@@ -73,7 +68,17 @@
 #define EL_DIR_DDR DDRB
 #define EL_DIR_NUM 5
 
+// EL PWM: D11
+#define EL_PWM_PORT PORTB
+#define EL_PWM_DDR DDRB
+#define EL_PWM_NUM 3
+
 // Missing: Thermal shutdown flag of the drivers, to less pins
+//TODO: We do have enought pins (most A* pins can be used)
+
+/* Serial port settings */
+#define BAUD 9600
+#define MYUBRR (F_CPU/16/BAUD-1)
 
 /* Informations */
 
@@ -155,6 +160,10 @@ typedef struct {
 rotorstate_t rotorstate;
 
 int main(void);
+void easycomm();
+void usart_init(void);
+void usart_transmit(uint8_t);
+uint8_t usart_receive(void);
 void setuprotor(void);
 void home(void);
 void homeaz(void);
