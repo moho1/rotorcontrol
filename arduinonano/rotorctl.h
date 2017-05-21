@@ -78,7 +78,7 @@
 
 /* Serial port settings */
 #define BAUD 9600
-#define MYUBRR (F_CPU/16/BAUD-1)
+#define MYUBRR (F_CPU/16/BAUD-1) //Formula c&p from the datasheet
 
 /* Informations */
 
@@ -104,6 +104,11 @@
 
 // Max tickcounter, needed for speedcontrol
 #define TICKCOUNT_MAX 100
+
+// Max command length
+// 10 should be enought
+#define CMD_MAX 10
+uint8_t cmd[CMD_MAX];
 
 uint8_t gray2bin[4] = { 0b00, 0b01, 0b11, 0b10 };
 

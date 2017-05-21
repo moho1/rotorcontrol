@@ -14,9 +14,41 @@ int main(void) {
 
 void easycomm() {
 	usart_init();
-	// Testing the usart
+	uint8_t cmd_length;
 	while(1) {
-		usart_transmit(usart_receive());
+		cmd_length = read_cmd();
+		if (cmd_length < 2) {
+			continue; // All commands are at least 2 char long
+		}
+	}
+}
+
+// Read one command from uart into cmd array and return length
+uint8_t read_cmd(void) {
+	uint8_t length = 0;
+	while (1) {
+		uint8_t c;
+		c = usart_receive();
+		
+		// Convert lower to upper letters
+		if ((c >= 'a') && (c <= 'z')) {
+			c -= 0x20;
+		}
+		
+		// Filter out not-number and not-characters
+		if ((c < '0') ||
+		    ((c > '9') && (c < 'A')) ||
+		    (c > 'Z')) {
+			return length; // Command fully read
+		}
+		
+		cmd[length] = c;
+		length++;
+		
+		// Maximum length read, cmd must end here
+		if (length == CMD_MAX) {
+			return length-1;
+		}
 	}
 }
 
