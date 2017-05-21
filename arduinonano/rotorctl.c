@@ -277,16 +277,16 @@ void setuppins(void) {
 	
 	/* Setup PWM for AZ/EL driver */
 	// TIMER0 for AZ
-	// non-inverting OC0A, Fast PWM, reset at OCR0A
+	// non-inverting OC0A, Fast PWM, clear at OCR0A
 	TCCR0A = (1<<COM0A1) | (1<<WGM01) | (1<<WGM00);
-	// Clock divisor 1024 => ~all 10ms reset
-	TCCR0B = (1<<CS02) | (1<<CS00);
+	// Clock divisor 256 => ~all 0.4ms reset
+	TCCR0B = (1<<CS02);
 	
 	// TIMER2 for EL
-	// non-inverting OC2A, Fast PWM, reset at OCR2A
+	// non-inverting OC2A, Fast PWM, clear at OCR2A
 	TCCR2A = (1<<COM2A1) | (1<<WGM21) | (1<<WGM20);
-	// Clock divisor 1024 => ~all 10ms reset
-	TCCR2B = (1<<CS22) | (1<<CS21) | (1<<CS20);
+	// Clock divisor 256 => ~all 0.4ms reset
+	TCCR2B = (1<<CS22) | (1<<CS21);
 }
 
 int sign(int x) {
