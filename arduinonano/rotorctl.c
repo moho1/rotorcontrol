@@ -209,7 +209,7 @@ void set_azspeed(uint8_t speed) {
 		AZ_BRK_PORT &= ~(1<<AZ_DIR_NUM);
 	}
 	//TODO: handle speed=0 special
-	OCR0A = speedpreset[speed];
+	OCR0A = speedpresets[speed];
 	if (speed == 0) {
 		AZ_BRK_PORT |= (1<<AZ_DIR_NUM);
 	}
@@ -229,7 +229,7 @@ void set_elspeed(uint8_t speed) {
 		EL_BRK_PORT &= ~(1<<EL_DIR_NUM);
 	}
 	//TODO: handle speed=0 special
-	OCR2A = speedpreset[speed];
+	OCR2A = speedpresets[speed];
 	if (speed == 0) {
 		EL_BRK_PORT |= (1<<EL_DIR_NUM);
 	}
