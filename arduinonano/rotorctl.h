@@ -102,6 +102,9 @@
 #define AZ_MAXSTEPS (180 * AZ_SCALE)
 #define EL_MAXSTEPS (40 * EL_SCALE)
 
+uint8_t versionstr[] = "VErotorctl0.1";
+uint8_t versionstr_len = 13;
+
 // Max tickcounter, needed for speedcontrol
 #define TICKCOUNT_MAX 100
 
@@ -109,6 +112,7 @@
 // 10 should be enought
 #define CMD_MAX 10
 uint8_t cmd[CMD_MAX];
+uint8_t cmd_length;
 
 uint8_t gray2bin[4] = { 0b00, 0b01, 0b11, 0b10 };
 
@@ -166,9 +170,17 @@ rotorstate_t rotorstate;
 
 int main(void);
 void easycomm();
-uint8_t read_cmd(void);
+void exec_cmd(void);
+void cmd_az(void);
+void cmd_el(void);
+uint8_t encode_deg(uint16_t, uint8_t[], uint8_t);
+uint16_t decode_deg(void);
+void cmd_ve(void);
+void read_cmd(void);
 void usart_init(void);
 void usart_transmit(uint8_t);
+void usart_transmit_mult(uint8_t[], uint8_t);
+void usart_write(char[]);
 uint8_t usart_receive(void);
 void setuprotor(void);
 void home(void);

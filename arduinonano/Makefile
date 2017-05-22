@@ -1,5 +1,5 @@
 CC=avr-gcc
-CFLAGS=-O2 -DF_CPU=16000000UL -mmcu=atmega328p
+CFLAGS=-O2 -DF_CPU=16000000UL -mmcu=atmega328p -Wall -Wextra
 
 PROGNAME=rotorctl
 

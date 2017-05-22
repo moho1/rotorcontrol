@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -14,40 +15,155 @@ int main(void) {
 
 void easycomm() {
 	usart_init();
-	uint8_t cmd_length;
 	while(1) {
-		cmd_length = read_cmd();
+		read_cmd();
 		if (cmd_length < 2) {
 			continue; // All commands are at least 2 char long
 		}
+		exec_cmd();
 	}
 }
 
+void exec_cmd(void) {
+	if (memcmp(cmd, "AZ", 2) == 0)
+		cmd_az();
+	else if (memcmp(cmd, "EL", 2) == 0)
+		cmd_el();
+	else if (memcmp(cmd, "VE", 2) == 0)
+		cmd_ve();
+}
+
+void cmd_az(void) {
+	// Is a degree supplied?
+	if (cmd_length > 2) {
+		/* Set new degree */
+		// deg is in *10^1 to avoid floats
+		uint16_t deg = decode_deg();
+		if (deg <= 180) {
+			uint32_t steps = deg * AZ_SCALE;
+			steps /= 10;
+			rotorstate.azsteps_want = (uint16_t)steps;
+		}
+	}
+	/* Return degree */
+	
+	uint32_t steps = (uint32_t)rotorstate.azsteps;
+	steps *= 10;
+	uint16_t deg = (uint16_t)(steps / AZ_SCALE);
+	uint8_t degs[5];
+	uint8_t length = encode_deg(deg, degs, 5);
+	uint8_t retstr[] = "AZXXX.X";
+	for (uint8_t i = 0; i < length; i++) {
+		retstr[i+2] = degs[i];
+	}
+	usart_transmit_mult(retstr, length + 2);
+}
+
+void cmd_el(void) {
+	// Is a degree supplied?
+	if (cmd_length > 2) {
+		/* Set new degree */
+		// deg is in *10^1 to avoid floats
+		uint16_t deg = decode_deg();
+		if (deg <= 40) {
+			uint32_t steps = deg * EL_SCALE;
+			steps /= 10;
+			rotorstate.elsteps_want = (uint16_t)steps;
+		}
+	}
+	/* Return degree */
+	uint32_t steps = (uint32_t)rotorstate.elsteps;
+	steps *= 10;
+	uint16_t deg = (uint16_t)(steps / EL_SCALE);
+	uint8_t degs[5];
+	uint8_t length = encode_deg(deg, degs, 5);
+	uint8_t retstr[] = "ELXXX.X";
+	for (uint8_t i = 0; i < length; i++) {
+		retstr[i+2] = degs[i];
+	}
+	usart_transmit_mult(retstr, length + 2);
+}
+
+uint8_t encode_deg(uint16_t deg, uint8_t str[], uint8_t maxlength) {
+	uint8_t idx = maxlength - 1;
+	// Fill the buffer from the end
+	while (1) {
+		// Insert . after one decimal place
+		if (idx == maxlength-2) {
+			str[idx] = '.';
+			idx--;
+			continue;
+		}
+		uint8_t part = (uint8_t)(deg % 10);
+		str[idx] = part + '0';
+		deg /= 10;
+		if (deg == 0 && idx < maxlength - 2) {
+			break;
+		}
+		if (idx == 0) {
+			break;
+		}
+		idx--;
+	}
+	// Move the buffer to the front
+	for(uint8_t i = 0; i < maxlength - idx; i++) {
+		str[i] = str[i+idx];
+	}
+	return maxlength - idx;
+}
+
+uint16_t decode_deg(void) {
+	uint16_t deg = 0;
+	uint8_t idx = 2;
+	for (; idx < CMD_MAX; idx++) {
+		// Non-numeric literal?
+		if (cmd[idx] < '0' || cmd[idx] > '9') {
+			break;
+		}
+		deg *= 10;
+		deg += cmd[idx] - '0';
+	}
+	idx++;
+	deg *= 10;
+	// Valid number left?
+	if (idx == CMD_MAX || cmd[idx] < '0' || cmd[idx] > '9' ) {
+		return deg;
+	}
+	deg += cmd[idx] - '0';
+	return deg;
+}
+
+void cmd_ve(void) {
+	usart_transmit_mult(versionstr, versionstr_len);
+}
+
 // Read one command from uart into cmd array and return length
-uint8_t read_cmd(void) {
-	uint8_t length = 0;
+void read_cmd(void) {
+	cmd_length = 0;
 	while (1) {
 		uint8_t c;
 		c = usart_receive();
 		
 		// Convert lower to upper letters
 		if ((c >= 'a') && (c <= 'z')) {
-			c -= 0x20;
+			c -= ('a'-'A');
 		}
 		
 		// Filter out not-number and not-characters
-		if ((c < '0') ||
+		if ((c < '.') ||
+			((c > '.') && (c < '0')) ||
 		    ((c > '9') && (c < 'A')) ||
 		    (c > 'Z')) {
-			return length; // Command fully read
+			return; // Command fully read
 		}
 		
-		cmd[length] = c;
-		length++;
+		cmd[cmd_length] = c;
+		cmd_length++;
 		
 		// Maximum length read, cmd must end here
-		if (length == CMD_MAX) {
-			return length-1;
+		if (cmd_length == CMD_MAX) {
+			cmd_length--;
+			return;
 		}
 	}
 }
@@ -69,6 +185,20 @@ void usart_transmit(uint8_t data) {
 	// Wait for empty transmit buffer
 	while(!(UCSR0A & (1<<UDRE0)));
 	UDR0 = data;
+}
+
+void usart_transmit_mult(uint8_t data[], uint8_t length) {
+	for (uint8_t i = 0; i<length; i++) {
+		usart_transmit(data[i]);
+	}
+}
+
+void usart_write(char string[]) {
+	for (uint8_t i = 0; string[i]; i++) {
+		usart_transmit((unsigned char)string[i]);
+	}
+	usart_transmit('\r');
+	usart_transmit('\n');
 }
 
 uint8_t usart_receive(void) {
