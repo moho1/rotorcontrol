@@ -402,11 +402,11 @@ void set_azdir(int8_t dir) {
 void set_elspeed(uint8_t speed) {
 	if (speed > 0) {
 		EL_BRK_PORT &= ~(1<<EL_DIR_NUM);
-		TCCR2A |= (1<<COM2A1); // Enable output
+		TCCR0A |= (1<<COM0B1); // Enable output
 	}
-	OCR2A = speedpresets[speed];
+	OCR0B = speedpresets[speed];
 	if (speed == 0) {
-		TCCR2A &= ~(1<<COM2A1); // Really disable output
+		TCCR0A &= ~(1<<COM0B1); // Really disable output
 		EL_BRK_PORT |= (1<<EL_DIR_NUM);
 	}
 }
@@ -452,19 +452,12 @@ void setuppins(void) {
 	/* Now all outputs should be turned off and the breaks fastend */
 	
 	/* Setup PWM for AZ/EL driver */
-	// TIMER0 for AZ
-	// non-inverting OC0A, Fast PWM, clear at OCR0A
-	// Not enabeling OC0A here, done when setting speed
+	// TIMER0 for AZ and EL, COMP A for AZ, COMP B for EL
+	// non-inverting, Fast PWM, clear at OCR0A / OCR0B
+	// Not enabeling OC0A and OC0B here, done when setting speed
 	TCCR0A = (1<<WGM01) | (1<<WGM00);
 	// Clock divisor 256 => ~all 0.4ms reset
 	TCCR0B = (1<<CS02);
-	
-	// TIMER2 for EL
-	// non-inverting OC2A, Fast PWM, clear at OCR2A
-	// Not enabeling OC2A here, done when setting speed
-	TCCR2A = (1<<WGM21) | (1<<WGM20);
-	// Clock divisor 256 => ~all 0.4ms reset
-	TCCR2B = (1<<CS22) | (1<<CS21);
 }
 
 int sign(int x) {

@@ -23,37 +23,37 @@
 #define AZ_SW_PIN PIND
 #define AZ_SW_NUM 4
 
-// EL A: Pin D5
+// EL A: Pin D7
 #define EL_A_PORT PORTD
 #define EL_A_DDR DDRD
 #define EL_A_PIN PIND
-#define EL_A_NUM 5
+#define EL_A_NUM 7
 
-// EL B: Pin D7
-#define EL_B_PORT PORTD
-#define EL_B_DDR DDRD
-#define EL_B_PIN PIND
-#define EL_B_NUM 7
+// EL B: Pin D8
+#define EL_B_PORT PORTB
+#define EL_B_DDR DDRB
+#define EL_B_PIN PINB
+#define EL_B_NUM 0
 
-// EL endswitch: D8
+// EL endswitch: D9
 #define EL_SW_PORT PORTB
 #define EL_SW_DDR DDRB
 #define EL_SW_PIN PINB
-#define EL_SW_NUM 0
+#define EL_SW_NUM 1
 
 /* Driver outputs */
 
-// AZ direction: D9
+// AZ direction: D10
 #define AZ_DIR_PORT PORTB
 #define AZ_DIR_DDR DDRB
-#define AZ_DIR_NUM 1
+#define AZ_DIR_NUM 2
 
-// AZ break: D10
+// AZ break: D11
 #define AZ_BRK_PORT PORTB
 #define AZ_BRK_DDR DDRB
-#define AZ_BRK_NUM 2
+#define AZ_BRK_NUM 3
 
-// AZ PWM: D6
+// AZ PWM: D6 OC0A
 #define AZ_PWM_PORT PORTD
 #define AZ_PWM_DDR DDRD
 #define AZ_PWM_NUM 6
@@ -68,10 +68,10 @@
 #define EL_DIR_DDR DDRB
 #define EL_DIR_NUM 5
 
-// EL PWM: D11
-#define EL_PWM_PORT PORTB
-#define EL_PWM_DDR DDRB
-#define EL_PWM_NUM 3
+// EL PWM: D5 OC0B
+#define EL_PWM_PORT PORTD
+#define EL_PWM_DDR DDRD
+#define EL_PWM_NUM 5
 
 // Missing: Thermal shutdown flag of the drivers, to less pins
 //TODO: We do have enought pins (most A* pins can be used)
