@@ -38,8 +38,8 @@ void cmd_az(void) {
 	if (cmd_length > 2) {
 		/* Set new degree */
 		// deg is in *10^1 to avoid floats
-		uint16_t deg = decode_deg();
-		if (deg <= 180) {
+		uint32_t deg = decode_deg();
+		if (deg <= 1800) {
 			uint32_t steps = deg * AZ_SCALE;
 			steps /= 10;
 			rotorstate.azsteps_want = (uint16_t)steps;
@@ -56,7 +56,8 @@ void cmd_az(void) {
 	for (uint8_t i = 0; i < length; i++) {
 		retstr[i+2] = degs[i];
 	}
-	usart_transmit_mult(retstr, length + 2);
+	retstr[length + 2] = ' ';
+	usart_transmit_mult(retstr, length + 3);
 }
 
 void cmd_el(void) {
@@ -64,8 +65,8 @@ void cmd_el(void) {
 	if (cmd_length > 2) {
 		/* Set new degree */
 		// deg is in *10^1 to avoid floats
-		uint16_t deg = decode_deg();
-		if (deg <= 40) {
+		uint32_t deg = decode_deg();
+		if (deg <= 400) {
 			uint32_t steps = deg * EL_SCALE;
 			steps /= 10;
 			rotorstate.elsteps_want = (uint16_t)steps;
@@ -81,7 +82,8 @@ void cmd_el(void) {
 	for (uint8_t i = 0; i < length; i++) {
 		retstr[i+2] = degs[i];
 	}
-	usart_transmit_mult(retstr, length + 2);
+	retstr[length + 2] = ' ';
+	usart_transmit_mult(retstr, length + 3);
 }
 
 uint8_t encode_deg(uint16_t deg, uint8_t str[], uint8_t maxlength) {
@@ -177,8 +179,8 @@ void usart_init(void) {
 	// Set frame format: 8N1
 	UCSR0C = (1<<UCSZ00) | (1<<UCSZ01);
 	
-	// Enable receiver and transmitter
-	UCSR0B = (1<<RXEN0) | (1<<TXEN0);
+	// Enable receiver and transmitter and receive interrupt
+	UCSR0B = (1<<RXEN0) | (1<<TXEN0) | (1<<RXCIE0);
 }
 
 void usart_transmit(uint8_t data) {
@@ -203,8 +205,17 @@ void usart_write(char string[]) {
 
 uint8_t usart_receive(void) {
 	// Wait for new frame
-	while(!(UCSR0A & (1<<RXC0)));
-	return UDR0;
+	while(buffread == buffwrite);
+	uint8_t retval = buffer[buffread];
+	buffread++;
+	buffread %= BUFFSIZE;
+	return retval;
+}
+
+ISR ( USART_RX_vect ) {
+	buffer[buffwrite] = UDR0;
+	buffwrite++;
+	buffwrite %= BUFFSIZE;
 }
 
 void setuprotor(void) {

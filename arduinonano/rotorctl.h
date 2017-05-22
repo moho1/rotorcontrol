@@ -80,6 +80,10 @@
 #define BAUD 9600
 #define MYUBRR (F_CPU/16/BAUD-1) //Formula c&p from the datasheet
 
+#define BUFFSIZE 20
+uint8_t buffer[BUFFSIZE];
+volatile uint8_t buffread, buffwrite;
+
 /* Informations */
 
 // When is the endswitch hit?
@@ -102,8 +106,8 @@
 #define AZ_MAXSTEPS (180 * AZ_SCALE)
 #define EL_MAXSTEPS (40 * EL_SCALE)
 
-uint8_t versionstr[] = "VErotorctl0.1";
-uint8_t versionstr_len = 13;
+uint8_t versionstr[] = "VErotorctl0.1\r\n";
+uint8_t versionstr_len = 15;
 
 // Max tickcounter, needed for speedcontrol
 #define TICKCOUNT_MAX 100
