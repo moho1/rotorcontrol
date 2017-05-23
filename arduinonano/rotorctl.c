@@ -6,6 +6,7 @@
 #include "rotorctl.h"
 
 int main(void) {
+	usart_init();
 	setuppins();
 	home();
 	setuprotor();
@@ -14,7 +15,6 @@ int main(void) {
 }
 
 void easycomm() {
-	usart_init();
 	while(1) {
 		read_cmd();
 		if (cmd_length < 2) {
@@ -219,9 +219,8 @@ ISR ( USART_RX_vect ) {
 }
 
 void setuprotor(void) {
-	TCCR1A = (1<<WGM12) | (1<<CS12); // CTC mode, prescaler 256
-	OCR1AH = (uint8_t)(0); // Compare trigger after 8 counts
-	OCR1AL = (uint8_t)(8);
+	TCCR1B = (1<<WGM12) | (1<<CS12); // CTC mode, prescaler 256
+	OCR1A = (uint16_t)(8); // Compare trigger after 8 counts
 	TIMSK1 |= 1<<OCIE1A; // Enable compare interrupt TIMER1_COMP_vect
 	SREG |= (1<<SREG_I); // Global Interupt enable
 }
@@ -235,30 +234,37 @@ ISR( TIMER1_COMPA_vect ) {
 	// Read Azimuth position
 	rotorstate.az_gray_old = rotorstate.az_gray;
 	rotorstate.az_bin_old = rotorstate.az_bin;
-	uint8_t az_a = (AZ_A_PIN & (1<<AZ_A_NUM))>>AZ_A_PIN;
-	uint8_t az_b = (AZ_B_PIN & (1<<AZ_B_NUM))>>AZ_B_PIN;
+	uint8_t az_a = (AZ_A_PIN & (1<<AZ_A_NUM))>>AZ_A_NUM;
+	uint8_t az_b = (AZ_B_PIN & (1<<AZ_B_NUM))>>AZ_B_NUM;
 	rotorstate.az_gray = az_a | (az_b<<1);
 	rotorstate.az_bin = gray2bin[rotorstate.az_gray];
+	//usart_transmit(rotorstate.az_gray + '0');
+	//usart_transmit(rotorstate.az_bin + '0');
+	//usart_write("");
 	
 	// Read Elevation position
 	rotorstate.el_gray_old = rotorstate.el_gray;
 	rotorstate.el_bin_old = rotorstate.el_bin;
-	uint8_t el_a = (EL_A_PIN & (1<<EL_A_NUM))>>EL_A_PIN;
-	uint8_t el_b = (EL_B_PIN & (1<<EL_B_NUM))>>EL_B_PIN;
+	uint8_t el_a = (EL_A_PIN & (1<<EL_A_NUM))>>EL_A_NUM;
+	uint8_t el_b = (EL_B_PIN & (1<<EL_B_NUM))>>EL_B_NUM;
 	rotorstate.el_gray = el_a | (el_b<<1);
 	rotorstate.el_bin = gray2bin[rotorstate.el_gray];
 	
 	// Update Azimuth if rotor has moved
 	if ((rotorstate.az_bin == 0 && rotorstate.az_bin_old == 3) || rotorstate.az_bin > rotorstate.az_bin_old) {
+		//usart_write("az cnt up");
 		// Encoder counting up
 		rotorstate.az_movedir = AZ_ENCDIR;
 		rotorstate.azsteps += AZ_ENCDIR;
-	} else if (rotorstate.az_bin != rotorstate.az_bin_old) {
+	} else if ((rotorstate.az_bin == 3 && rotorstate.az_bin_old == 0) || rotorstate.az_bin < rotorstate.az_bin_old) {
+		//usart_write("az cnt dn");
 		// Encoder counting, but not up -> counting down
 		rotorstate.az_movedir = -AZ_ENCDIR;
 		rotorstate.azsteps -= AZ_ENCDIR;
-	} // No else. We want to keep the old direction in memory.
-	
+	} else if ((rotorstate.az_bin == 2 && rotorstate.az_bin_old == 0) || (rotorstate.az_bin == 3 && rotorstate.az_bin_old == 1) || (rotorstate.az_bin == 1 && rotorstate.az_bin_old == 3) || (rotorstate.az_bin == 0 && rotorstate.az_bin_old == 2)){ // No else. We want to keep the old direction in memory.
+		usart_write("should never happen");
+	}
+	 
 	// Update Elevation if rotor has moved
 	if ((rotorstate.el_bin == 0 && rotorstate.el_bin_old == 3) || rotorstate.el_bin > rotorstate.el_bin_old) {
 		// Encoder counting up
@@ -276,6 +282,7 @@ ISR( TIMER1_COMPA_vect ) {
 		// renew az speed
 		int16_t azdiff = rotorstate.azsteps_want - rotorstate.azsteps;
 		if (azdiff == 0) {
+			//usart_write("diff 0");
 			if (rotorstate.az_speed == 0) {
 				// All well
 			} else { 
@@ -284,21 +291,28 @@ ISR( TIMER1_COMPA_vect ) {
 			}
 		} else if (sign(azdiff) == rotorstate.az_movedir) {
 			// We are moving in the right direction
-			if (abs(azdiff) >= speedsteps[rotorstate.az_speed+1]) {
+			//usart_write("diff, right dir");
+			if (rotorstate.az_speed != MAXSPEED && abs(azdiff) >= speedsteps[rotorstate.az_speed+1]) {
+				//usart_write("incspeed");
 				rotorstate.az_speed++;
 			} else if (abs(azdiff) < speedsteps[rotorstate.az_speed]) {
+				//usart_write("decspeed");
 				rotorstate.az_speed--;
 			}
 		} else {
+			//usart_write("diff, wrong dir");
 			// We are not moving in the right direction
 			if (rotorstate.az_speed != 0) {
+				//usart_write("decspeed");
 				rotorstate.az_speed--;
 			}
 		}
 		
 		set_azspeed(rotorstate.az_speed);
 		if (rotorstate.az_speed == 0) {
+			//usart_write("setsign");
 			set_azdir(sign(azdiff));
+			rotorstate.az_movedir = sign(azdiff) * AZ_ENCDIR;
 		}
 	} else if (rotorstate.az_speed == 1) {
 		// only check for precice hit at nearly no speed
@@ -350,6 +364,8 @@ ISR( TIMER1_COMPA_vect ) {
 void home(void) {
 	homeaz();
 	homeel();
+	rotorstate.azsteps = 0;
+	rotorstate.elsteps = 0;
 }
 
 void homeaz(void) {
@@ -379,14 +395,17 @@ void homeel(void) {
 }
 
 void set_azspeed(uint8_t speed) {
+	//usart_write("setting speed");
+	//usart_transmit(speed + '0');
 	if (speed > 0) {
-		AZ_BRK_PORT &= ~(1<<AZ_DIR_NUM);
+		AZ_BRK_PORT &= ~(1<<AZ_BRK_NUM);
 		TCCR0A |= (1<<COM0A1); // Enable output
 	}
 	OCR0A = speedpresets[speed];
 	if (speed == 0) {
+		//usart_write("really stopping");
 		TCCR0A &= ~(1<<COM0A1); // Really disable output
-		AZ_BRK_PORT |= (1<<AZ_DIR_NUM);
+		AZ_BRK_PORT |= (1<<AZ_BRK_NUM);
 	}
 }
 
@@ -401,13 +420,13 @@ void set_azdir(int8_t dir) {
 
 void set_elspeed(uint8_t speed) {
 	if (speed > 0) {
-		EL_BRK_PORT &= ~(1<<EL_DIR_NUM);
+		EL_BRK_PORT &= ~(1<<EL_BRK_NUM);
 		TCCR0A |= (1<<COM0B1); // Enable output
 	}
 	OCR0B = speedpresets[speed];
 	if (speed == 0) {
 		TCCR0A &= ~(1<<COM0B1); // Really disable output
-		EL_BRK_PORT |= (1<<EL_DIR_NUM);
+		EL_BRK_PORT |= (1<<EL_BRK_NUM);
 	}
 }
 

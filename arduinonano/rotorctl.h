@@ -43,10 +43,10 @@
 
 /* Driver outputs */
 
-// AZ direction: D10
+// AZ direction: D13
 #define AZ_DIR_PORT PORTB
 #define AZ_DIR_DDR DDRB
-#define AZ_DIR_NUM 2
+#define AZ_DIR_NUM 5
 
 // AZ break: D11
 #define AZ_BRK_PORT PORTB
@@ -63,10 +63,10 @@
 #define EL_BRK_DDR DDRB
 #define EL_BRK_NUM 4
 
-// EL direction: D13
+// EL direction: D10
 #define EL_DIR_PORT PORTB
 #define EL_DIR_DDR DDRB
-#define EL_DIR_NUM 5
+#define EL_DIR_NUM 2
 
 // EL PWM: D5 OC0B
 #define EL_PWM_PORT PORTD
@@ -131,12 +131,12 @@ uint16_t speedpresets[MAXSPEED+1] = {0, 10, 50, 100, 200, 255};
 
 typedef struct {
 	// Current az/el in steps
-	int16_t azsteps;
-	int16_t elsteps;
+	int32_t azsteps;
+	int32_t elsteps;
 	
 	// Wanted az/el in steps
-	int16_t azsteps_want;
-	int16_t elsteps_want;
+	int32_t azsteps_want;
+	int32_t elsteps_want;
 	
 	/* moveticks is currently unused */
 	// Ticks since last degree change
