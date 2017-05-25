@@ -266,29 +266,53 @@ ISR( TIMER1_COMPA_vect ) {
 	rotorstate.el_bin = gray2bin[rotorstate.el_gray];
 	
 	// Update Azimuth if rotor has moved
-	if ((rotorstate.az_bin == 0 && rotorstate.az_bin_old == 3) || rotorstate.az_bin > rotorstate.az_bin_old) {
+	if ((rotorstate.az_bin == 0 && rotorstate.az_bin_old == 3) ||
+	    (rotorstate.az_bin == 1 && rotorstate.az_bin_old == 0) ||
+	    (rotorstate.az_bin == 2 && rotorstate.az_bin_old == 1) ||
+	    (rotorstate.az_bin == 3 && rotorstate.az_bin_old == 2)) {
 		//usart_write("az cnt up");
 		// Encoder counting up
 		rotorstate.az_movedir = AZ_ENCDIR;
 		rotorstate.azsteps += AZ_ENCDIR;
-	} else if ((rotorstate.az_bin == 3 && rotorstate.az_bin_old == 0) || rotorstate.az_bin < rotorstate.az_bin_old) {
+	} else if ((rotorstate.az_bin == 0 && rotorstate.az_bin_old == 1) ||
+	           (rotorstate.az_bin == 1 && rotorstate.az_bin_old == 2) ||
+	           (rotorstate.az_bin == 2 && rotorstate.az_bin_old == 3) ||
+	           (rotorstate.az_bin == 3 && rotorstate.az_bin_old == 0)) {
 		//usart_write("az cnt dn");
 		// Encoder counting, but not up -> counting down
 		rotorstate.az_movedir = -AZ_ENCDIR;
 		rotorstate.azsteps -= AZ_ENCDIR;
-	} else if ((rotorstate.az_bin == 2 && rotorstate.az_bin_old == 0) || (rotorstate.az_bin == 3 && rotorstate.az_bin_old == 1) || (rotorstate.az_bin == 1 && rotorstate.az_bin_old == 3) || (rotorstate.az_bin == 0 && rotorstate.az_bin_old == 2)){ // No else. We want to keep the old direction in memory.
-		usart_write("should never happen");
-	}
+	} else if ((rotorstate.az_bin == 0 && rotorstate.az_bin_old == 2) ||
+	           (rotorstate.az_bin == 1 && rotorstate.az_bin_old == 3) ||
+	           (rotorstate.az_bin == 2 && rotorstate.az_bin_old == 0) ||
+	           (rotorstate.az_bin == 3 && rotorstate.az_bin_old == 1)) {
+		// Must have skipped a step, this should not be able to happen
+		usart_write("ALskippedaz");
+	} // No else. We want to keep the old direction in memory.
 	 
 	// Update Elevation if rotor has moved
-	if ((rotorstate.el_bin == 0 && rotorstate.el_bin_old == 3) || rotorstate.el_bin > rotorstate.el_bin_old) {
+	if ((rotorstate.el_bin == 0 && rotorstate.el_bin_old == 3) ||
+	    (rotorstate.el_bin == 1 && rotorstate.el_bin_old == 0) ||
+	    (rotorstate.el_bin == 2 && rotorstate.el_bin_old == 1) ||
+	    (rotorstate.el_bin == 3 && rotorstate.el_bin_old == 2)) {
+		//usart_write("el cnt up");
 		// Encoder counting up
 		rotorstate.el_movedir = EL_ENCDIR;
 		rotorstate.elsteps += EL_ENCDIR;
-	} else if (rotorstate.el_bin != rotorstate.el_bin_old) {
+	} else if ((rotorstate.el_bin == 0 && rotorstate.el_bin_old == 1) ||
+	           (rotorstate.el_bin == 1 && rotorstate.el_bin_old == 2) ||
+	           (rotorstate.el_bin == 2 && rotorstate.el_bin_old == 3) ||
+	           (rotorstate.el_bin == 3 && rotorstate.el_bin_old == 0)) {
+		//usart_write("el cnt dn");
 		// Encoder counting, but not up -> counting down
 		rotorstate.el_movedir = -EL_ENCDIR;
 		rotorstate.elsteps -= EL_ENCDIR;
+	} else if ((rotorstate.el_bin == 0 && rotorstate.el_bin_old == 2) ||
+	           (rotorstate.el_bin == 1 && rotorstate.el_bin_old == 3) ||
+	           (rotorstate.el_bin == 2 && rotorstate.el_bin_old == 0) ||
+	           (rotorstate.el_bin == 3 && rotorstate.el_bin_old == 1)) {
+		// Must have skipped a step, this should not be able to happen
+		usart_write("ALskippedel");
 	} // No else. We want to keep the old direction in memory.
 	
 	rotorstate.tickcount += 1;
@@ -351,7 +375,7 @@ ISR( TIMER1_COMPA_vect ) {
 			}
 		} else if (sign(eldiff) == rotorstate.el_movedir) {
 			// We are moving in the right direction
-			if (abs(eldiff) >= speedsteps[rotorstate.el_speed+1]) {
+			if (rotorstate.el_speed != MAXSPEED && abs(eldiff) >= speedsteps[rotorstate.el_speed+1]) {
 				rotorstate.el_speed++;
 			} else if (abs(eldiff) < speedsteps[rotorstate.el_speed]) {
 				rotorstate.el_speed--;
@@ -366,6 +390,7 @@ ISR( TIMER1_COMPA_vect ) {
 		set_elspeed(rotorstate.el_speed);
 		if (rotorstate.el_speed == 0) {
 			set_eldir(sign(eldiff));
+			rotorstate.el_movedir = sign(eldiff) * EL_ENCDIR;
 		}
 	} else if (rotorstate.el_speed == 1) {
 		// only check for precice hit at nearly no speed
