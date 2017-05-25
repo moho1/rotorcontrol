@@ -180,13 +180,17 @@ void usart_init(void) {
 	UCSR0C = (1<<UCSZ00) | (1<<UCSZ01);
 	
 	// Enable receiver and transmitter and receive interrupt
-	UCSR0B = (1<<RXEN0) | (1<<TXEN0) | (1<<RXCIE0);
+	UCSR0B |= (1<<RXEN0) | (1<<TXEN0) | (1<<RXCIE0);
+	SREG |= (1<<SREG_I); // Global interrupt enable
 }
 
 void usart_transmit(uint8_t data) {
-	// Wait for empty transmit buffer
-	while(!(UCSR0A & (1<<UDRE0)));
-	UDR0 = data;
+	// Write data in the transmit buffer
+	txbuffer[txbuffwrite] = data;
+	txbuffwrite++;
+	txbuffwrite %= TXBUFFSIZE;
+	//Enable Interrupt
+	UCSR0B |= (1<<UDRIE0);
 }
 
 void usart_transmit_mult(uint8_t data[], uint8_t length) {
@@ -203,19 +207,30 @@ void usart_write(char string[]) {
 	usart_transmit('\n');
 }
 
+ISR ( USART_UDRE_vect ) {
+	if (txbuffread == txbuffwrite) {
+		// Disable Interrupt
+		UCSR0B &= ~(1<<UDRIE0);
+		return;
+	}
+	UDR0 = txbuffer[txbuffread];
+	txbuffread++;
+	txbuffread %= TXBUFFSIZE;
+}
+
 uint8_t usart_receive(void) {
 	// Wait for new frame
-	while(buffread == buffwrite);
-	uint8_t retval = buffer[buffread];
-	buffread++;
-	buffread %= BUFFSIZE;
+	while(rxbuffread == rxbuffwrite);
+	uint8_t retval = rxbuffer[rxbuffread];
+	rxbuffread++;
+	rxbuffread %= RXBUFFSIZE;
 	return retval;
 }
 
 ISR ( USART_RX_vect ) {
-	buffer[buffwrite] = UDR0;
-	buffwrite++;
-	buffwrite %= BUFFSIZE;
+	rxbuffer[rxbuffwrite] = UDR0;
+	rxbuffwrite++;
+	rxbuffwrite %= RXBUFFSIZE;
 }
 
 void setuprotor(void) {

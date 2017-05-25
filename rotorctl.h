@@ -77,12 +77,16 @@
 //TODO: We do have enought pins (most A* pins can be used)
 
 /* Serial port settings */
-#define BAUD 9600
+#define BAUD 115200
 #define MYUBRR (F_CPU/16/BAUD-1) //Formula c&p from the datasheet
 
-#define BUFFSIZE 20
-uint8_t buffer[BUFFSIZE];
-volatile uint8_t buffread, buffwrite;
+#define TXBUFFSIZE 50
+uint8_t txbuffer[TXBUFFSIZE];
+volatile uint8_t txbuffread, txbuffwrite;
+
+#define RXBUFFSIZE 20
+uint8_t rxbuffer[RXBUFFSIZE];
+volatile uint8_t rxbuffread, rxbuffwrite;
 
 /* Informations */
 
