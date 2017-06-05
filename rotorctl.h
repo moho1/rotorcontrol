@@ -77,7 +77,7 @@
 //TODO: We do have enought pins (most A* pins can be used)
 
 /* Serial port settings */
-#define BAUD 115200
+#define BAUD 57600
 #define MYUBRR (F_CPU/16/BAUD-1) //Formula c&p from the datasheet
 
 #define TXBUFFSIZE 50
@@ -104,14 +104,13 @@ volatile uint8_t rxbuffread, rxbuffwrite;
 #define AZ_ENCDIR 1
 #define EL_ENCDIR 1
 
-#define AZ_SCALE 100 // 100 steps for 1 degree
-#define EL_SCALE 400 // 400 steps for 1 degree
+#define AZ_SCALE (int32_t)400 // 400 steps for 1 degree
+#define EL_SCALE (int32_t)1600 // 1600 steps for 1 degree
 
 #define AZ_MAXSTEPS (180 * AZ_SCALE)
 #define EL_MAXSTEPS (40 * EL_SCALE)
 
-uint8_t versionstr[] = "VErotorctl0.1\r\n";
-uint8_t versionstr_len = 15;
+char versionstr[] = "VErotorcontrol0.2";
 
 // Max tickcounter, needed for speedcontrol
 #define TICKCOUNT_MAX 100
@@ -129,7 +128,7 @@ uint8_t gray2bin[4] = { 0b00, 0b01, 0b11, 0b10 };
 // Min difference to engage higher speed
 uint16_t speedsteps[MAXSPEED+1] = { 0, 1, 10, 50, 200, 1000 };
 // Speed for each difference step
-uint16_t speedpresets[MAXSPEED+1] = {0, 10, 50, 100, 200, 255};
+uint16_t speedpresets[MAXSPEED+1] = {0, 20, 50, 100, 200, 255};
 
 /* Variables */
 
@@ -181,8 +180,8 @@ void easycomm();
 void exec_cmd(void);
 void cmd_az(void);
 void cmd_el(void);
-uint8_t encode_deg(uint16_t, uint8_t[], uint8_t);
-uint16_t decode_deg(void);
+uint8_t encode_deg(uint32_t, uint8_t[], uint8_t);
+uint32_t decode_deg(void);
 void cmd_ve(void);
 void read_cmd(void);
 void usart_init(void);
@@ -199,6 +198,7 @@ void set_azdir(int8_t);
 void set_elspeed(uint8_t);
 void set_eldir(int8_t);
 void setuppins(void);
-int sign(int);
+int32_t sign(int32_t);
+int32_t int32abs(int32_t);
 
 #endif //ROTORCTL_H

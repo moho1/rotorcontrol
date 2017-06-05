@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -42,14 +41,14 @@ void cmd_az(void) {
 		if (deg <= 1800) {
 			uint32_t steps = deg * AZ_SCALE;
 			steps /= 10;
-			rotorstate.azsteps_want = (uint16_t)steps;
+			rotorstate.azsteps_want = steps;
 		}
 	}
 	/* Return degree */
 	
 	uint32_t steps = (uint32_t)rotorstate.azsteps;
 	steps *= 10;
-	uint16_t deg = (uint16_t)(steps / AZ_SCALE);
+	uint32_t deg = (uint32_t)(steps / AZ_SCALE);
 	uint8_t degs[5];
 	uint8_t length = encode_deg(deg, degs, 5);
 	uint8_t retstr[] = "AZXXX.X";
@@ -69,13 +68,13 @@ void cmd_el(void) {
 		if (deg <= 400) {
 			uint32_t steps = deg * EL_SCALE;
 			steps /= 10;
-			rotorstate.elsteps_want = (uint16_t)steps;
+			rotorstate.elsteps_want = steps;
 		}
 	}
 	/* Return degree */
 	uint32_t steps = (uint32_t)rotorstate.elsteps;
 	steps *= 10;
-	uint16_t deg = (uint16_t)(steps / EL_SCALE);
+	uint32_t deg = (uint32_t)(steps / EL_SCALE);
 	uint8_t degs[5];
 	uint8_t length = encode_deg(deg, degs, 5);
 	uint8_t retstr[] = "ELXXX.X";
@@ -86,7 +85,7 @@ void cmd_el(void) {
 	usart_transmit_mult(retstr, length + 3);
 }
 
-uint8_t encode_deg(uint16_t deg, uint8_t str[], uint8_t maxlength) {
+uint8_t encode_deg(uint32_t deg, uint8_t str[], uint8_t maxlength) {
 	uint8_t idx = maxlength - 1;
 	// Fill the buffer from the end
 	while (1) {
@@ -114,8 +113,8 @@ uint8_t encode_deg(uint16_t deg, uint8_t str[], uint8_t maxlength) {
 	return maxlength - idx;
 }
 
-uint16_t decode_deg(void) {
-	uint16_t deg = 0;
+uint32_t decode_deg(void) {
+	uint32_t deg = 0;
 	uint8_t idx = 2;
 	for (; idx < CMD_MAX; idx++) {
 		// Non-numeric literal?
@@ -136,7 +135,7 @@ uint16_t decode_deg(void) {
 }
 
 void cmd_ve(void) {
-	usart_transmit_mult(versionstr, versionstr_len);
+	usart_write(versionstr);
 }
 
 // Read one command from uart into cmd array and return length
@@ -319,8 +318,8 @@ ISR( TIMER1_COMPA_vect ) {
 	if ( rotorstate.tickcount == (TICKCOUNT_MAX>>1)) {
 		// half of max tickcount
 		// renew az speed
-		int16_t azdiff = rotorstate.azsteps_want - rotorstate.azsteps;
-		if (azdiff == 0) {
+		int32_t azdiff = rotorstate.azsteps_want - rotorstate.azsteps;
+		if (int32abs(azdiff) <= 10) {
 			//usart_write("diff 0");
 			if (rotorstate.az_speed == 0) {
 				// All well
@@ -331,10 +330,10 @@ ISR( TIMER1_COMPA_vect ) {
 		} else if (sign(azdiff) == rotorstate.az_movedir) {
 			// We are moving in the right direction
 			//usart_write("diff, right dir");
-			if (rotorstate.az_speed != MAXSPEED && abs(azdiff) >= speedsteps[rotorstate.az_speed+1]) {
+			if (rotorstate.az_speed != MAXSPEED && int32abs(azdiff) >= speedsteps[rotorstate.az_speed+1]) {
 				//usart_write("incspeed");
 				rotorstate.az_speed++;
-			} else if (abs(azdiff) < speedsteps[rotorstate.az_speed]) {
+			} else if (int32abs(azdiff) < speedsteps[rotorstate.az_speed]) {
 				//usart_write("decspeed");
 				rotorstate.az_speed--;
 			}
@@ -355,7 +354,7 @@ ISR( TIMER1_COMPA_vect ) {
 		}
 	} else if (rotorstate.az_speed == 1) {
 		// only check for precice hit at nearly no speed
-		if (rotorstate.azsteps_want - rotorstate.azsteps == 0) {
+		if (int32abs(rotorstate.azsteps_want - rotorstate.azsteps) <= 10) {
 			rotorstate.az_speed--;
 			set_azspeed(rotorstate.az_speed);
 		}
@@ -365,8 +364,8 @@ ISR( TIMER1_COMPA_vect ) {
 		// max tickcount
 		rotorstate.tickcount = 0;
 		// renew el speed
-		int16_t eldiff = rotorstate.elsteps_want - rotorstate.elsteps;
-		if (eldiff == 0) {
+		int32_t eldiff = rotorstate.elsteps_want - rotorstate.elsteps;
+		if (int32abs(eldiff) <= 10) {
 			if (rotorstate.el_speed == 0) {
 				// All well
 			} else { 
@@ -375,9 +374,9 @@ ISR( TIMER1_COMPA_vect ) {
 			}
 		} else if (sign(eldiff) == rotorstate.el_movedir) {
 			// We are moving in the right direction
-			if (rotorstate.el_speed != MAXSPEED && abs(eldiff) >= speedsteps[rotorstate.el_speed+1]) {
+			if (rotorstate.el_speed != MAXSPEED && int32abs(eldiff) >= speedsteps[rotorstate.el_speed+1]) {
 				rotorstate.el_speed++;
-			} else if (abs(eldiff) < speedsteps[rotorstate.el_speed]) {
+			} else if (int32abs(eldiff) < speedsteps[rotorstate.el_speed]) {
 				rotorstate.el_speed--;
 			}
 		} else {
@@ -394,7 +393,7 @@ ISR( TIMER1_COMPA_vect ) {
 		}
 	} else if (rotorstate.el_speed == 1) {
 		// only check for precice hit at nearly no speed
-		if (rotorstate.elsteps_want - rotorstate.elsteps == 0) {
+		if (int32abs(rotorstate.elsteps_want - rotorstate.elsteps) <= 10) {
 			rotorstate.el_speed--;
 			set_elspeed(rotorstate.el_speed);
 		}
@@ -438,12 +437,13 @@ void set_azspeed(uint8_t speed) {
 	//usart_write("setting speed");
 	//usart_transmit(speed + '0');
 	if (speed > 0) {
+		//if (~(TCCR0A | ~(1<<COM0A1))) usart_write("unbreaking az");
 		AZ_BRK_PORT &= ~(1<<AZ_BRK_NUM);
 		TCCR0A |= (1<<COM0A1); // Enable output
 	}
 	OCR0A = speedpresets[speed];
 	if (speed == 0) {
-		//usart_write("really stopping");
+		//if (TCCR0A & (1<<COM0A1)) usart_write("really stopping az");
 		TCCR0A &= ~(1<<COM0A1); // Really disable output
 		AZ_BRK_PORT |= (1<<AZ_BRK_NUM);
 	}
@@ -519,7 +519,13 @@ void setuppins(void) {
 	TCCR0B = (1<<CS02);
 }
 
-int sign(int x) {
+int32_t sign(int32_t x) {
     return (x > 0) - (x < 0);
 }
 
+int32_t int32abs(int32_t x) {
+	if (x > 0)
+		return x;
+	else
+		return -x;
+}
