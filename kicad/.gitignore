@@ -1,0 +1,5 @@
+_autosave*
+*.bak
+*-cache.lib
+*-bak
+_saved*
