@@ -314,6 +314,8 @@ ISR( TIMER1_COMPA_vect ) {
 		usart_write("ALskippedel");
 	} // No else. We want to keep the old direction in memory.
 	
+	//TODO: Handle thermal flag here.
+	
 	rotorstate.tickcount += 1;
 	if ( rotorstate.tickcount == (TICKCOUNT_MAX>>1)) {
 		// half of max tickcount
@@ -439,12 +441,12 @@ void set_azspeed(uint8_t speed) {
 	if (speed > 0) {
 		//if (~(TCCR0A | ~(1<<COM0A1))) usart_write("unbreaking az");
 		AZ_BRK_PORT &= ~(1<<AZ_BRK_NUM);
-		TCCR0A |= (1<<COM0A1); // Enable output
+		TCCR0A |= (1<<AZ_PWM_EN); // Enable output
 	}
-	OCR0A = speedpresets[speed];
+	AZ_PWM_REG = speedpresets[speed];
 	if (speed == 0) {
 		//if (TCCR0A & (1<<COM0A1)) usart_write("really stopping az");
-		TCCR0A &= ~(1<<COM0A1); // Really disable output
+		TCCR0A &= ~(1<<AZ_PWM_EN); // Really disable output
 		AZ_BRK_PORT |= (1<<AZ_BRK_NUM);
 	}
 }
@@ -461,11 +463,11 @@ void set_azdir(int8_t dir) {
 void set_elspeed(uint8_t speed) {
 	if (speed > 0) {
 		EL_BRK_PORT &= ~(1<<EL_BRK_NUM);
-		TCCR0A |= (1<<COM0B1); // Enable output
+		TCCR0A |= (1<<EL_PWM_EN); // Enable output
 	}
-	OCR0B = speedpresets[speed];
+	EL_PWM_REG = speedpresets[speed];
 	if (speed == 0) {
-		TCCR0A &= ~(1<<COM0B1); // Really disable output
+		TCCR0A &= ~(1<<EL_PWM_EN); // Really disable output
 		EL_BRK_PORT |= (1<<EL_BRK_NUM);
 	}
 }
@@ -487,12 +489,16 @@ void setuppins(void) {
 	AZ_B_PORT |= (1<<AZ_B_NUM);
 	AZ_SW_DDR &= ~(1<<AZ_SW_NUM);
 	AZ_SW_PORT |= (1<<AZ_SW_NUM);
+	AZ_TH_DDR &= ~(1<<AZ_TH_NUM);
+	AZ_TH_PORT |= (1<<AZ_TH_NUM);
 	EL_A_DDR &= ~(1<<EL_A_NUM);
 	EL_A_PORT |= (1<<EL_A_NUM);
 	EL_B_DDR &= ~(1<<EL_B_NUM);
 	EL_B_PORT |= (1<<EL_B_NUM);
 	EL_SW_DDR &= ~(1<<EL_SW_NUM);
 	EL_SW_PORT |= (1<<EL_SW_NUM);
+	EL_TH_DDR &= ~(1<<EL_TH_NUM);
+	EL_TH_PORT |= (1<<EL_TH_NUM);
 	
 	// Configure outputs
 	AZ_DIR_DDR |= (1<<AZ_DIR_NUM);
