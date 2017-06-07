@@ -97,17 +97,6 @@ Text GLabel 5500 3350 2    60   Input ~ 0
 PWMEL
 Text GLabel 5500 3250 2    60   Input ~ 0
 PWMAZ
-$Comp
-L ArduinoNano U1
-U 1 1 59307DA0
-P 5100 3550
-F 0 "U1" H 5500 3550 60  0000 C CNN
-F 1 "ArduinoNano" H 4850 3550 60  0000 C CNN
-F 2 "" H 4750 3550 60  0001 C CNN
-F 3 "" H 4750 3550 60  0001 C CNN
-	1    5100 3550
-	0    1    1    0   
-$EndComp
 Text GLabel 5500 2950 2    60   Input ~ 0
 ELA
 Text GLabel 5500 3050 2    60   Input ~ 0
@@ -132,4 +121,15 @@ Text GLabel 4700 2950 0    60   Input ~ 0
 BRKAZ
 Text GLabel 4700 3050 0    60   Input ~ 0
 DIRAZ
+$Comp
+L ArduinoNano U1
+U 1 1 59307DA0
+P 5100 3550
+F 0 "U1" H 5500 3550 60  0000 C CNN
+F 1 "ArduinoNano" H 4850 3550 60  0000 C CNN
+F 2 "" H 4750 3550 60  0001 C CNN
+F 3 "" H 4750 3550 60  0001 C CNN
+	1    5100 3550
+	0    1    1    0   
+$EndComp
 $EndSCHEMATC
