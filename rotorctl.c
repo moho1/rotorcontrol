@@ -340,7 +340,9 @@ ISR( TIMER1_COMPA_vect ) {
 			WDTCSR = (1<<WDE);
 			while(1);
 		}
-		rotorstate.azsteps_want = rotorstate.azsteps > AZ_MAXSTEPS ? AZ_MAXSTEPS : 0;
+		if (!(rotorstate.azsteps_want > 0 && rotorstate.azsteps_want <= AZ_MAXSTEPS)) { // Well, other than this shouldn't happen, but...
+			rotorstate.azsteps_want = rotorstate.azsteps > AZ_MAXSTEPS ? AZ_MAXSTEPS : 0;
+		}
 	}
 
 	if (rotorstate.elsteps > EL_MAXSTEPS || rotorstate.elsteps < 0) {
@@ -350,7 +352,9 @@ ISR( TIMER1_COMPA_vect ) {
 			WDTCSR = (1<<WDE);
 			while(1);
 		}
-		rotorstate.elsteps_want = rotorstate.elsteps > EL_MAXSTEPS ? EL_MAXSTEPS : 0;
+		if (!(rotorstate.elsteps_want > 0 && rotorstate.elsteps_want <= EL_MAXSTEPS)) { // Well, other than this shouldn't happen, but...
+			rotorstate.elsteps_want = rotorstate.elsteps > EL_MAXSTEPS ? EL_MAXSTEPS : 0;
+		}
 	}
 	
 	uint8_t az_therm = (AZ_TH_PIN & (1<<AZ_TH_NUM))>>AZ_TH_NUM;
