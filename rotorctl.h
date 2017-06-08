@@ -86,8 +86,8 @@
 #define EL_PWM_PORT PORTD
 #define EL_PWM_DDR DDRD
 #define EL_PWM_NUM 6
-#define AZ_PWM_EN COM0A1
-#define AZ_PWM_REG OCR0A
+#define EL_PWM_EN COM0A1
+#define EL_PWM_REG OCR0A
 
 /* Serial port settings */
 #define BAUD 57600
