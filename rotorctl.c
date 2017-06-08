@@ -332,7 +332,54 @@ ISR( TIMER1_COMPA_vect ) {
 		usart_write("ALskippedel");
 	} // No else. We want to keep the old direction in memory.
 	
-	//TODO: Handle thermal flag here.
+	// Keep care, not to hit the end
+	if (rotorstate.azsteps > AZ_MAXSTEPS || rotorstate.azsteps < 0) {
+		if (rotorstate.azsteps > AZ_MAXSTEPS + 2*AZ_SCALE || rotorstate.azsteps < AZ_SCALE * -2) { // Overshot massively, stop and reset
+			set_azspeed(0);
+			// Trigger Watchdog
+			WDTCSR = (1<<WDE);
+			while(1);
+		}
+		rotorstate.azsteps_want = rotorstate.azsteps > AZ_MAXSTEPS ? AZ_MAXSTEPS : 0;
+	}
+
+	if (rotorstate.elsteps > EL_MAXSTEPS || rotorstate.elsteps < 0) {
+		if (rotorstate.elsteps > EL_MAXSTEPS + 2*EL_SCALE || rotorstate.elsteps < EL_SCALE * -2) { // Overshot massively, stop and reset
+			set_elspeed(0);
+			// Trigger Watchdog
+			WDTCSR = (1<<WDE);
+			while(1);
+		}
+		rotorstate.elsteps_want = rotorstate.elsteps > EL_MAXSTEPS ? EL_MAXSTEPS : 0;
+	}
+	
+	uint8_t az_therm = (AZ_TH_PIN & (1<<AZ_TH_NUM))>>AZ_TH_NUM;
+	uint8_t el_therm = (EL_TH_PIN & (1<<EL_TH_NUM))>>EL_TH_NUM;
+	if (az_therm) {
+		if (!rotorstate.az_thermtrig) {
+			usart_write("ALthermaz");
+		}
+		rotorstate.az_thermtrig = 1;
+	} else {
+		rotorstate.az_thermtrig = 0;
+	}
+
+	if (el_therm) {
+		if (!rotorstate.el_thermtrig) {
+			usart_write("ALthermel");
+		}
+		rotorstate.el_thermtrig = 1;
+	} else {
+		rotorstate.el_thermtrig = 0;
+	}
+	
+	if (rotorstate.az_thermtrig || rotorstate.el_thermtrig) {
+		rotorstate.az_speed = 0;
+		rotorstate.el_speed = 0;
+		set_azspeed(0);
+		set_elspeed(0);
+		return;
+	}
 	
 	rotorstate.tickcount += 1;
 	if ( rotorstate.tickcount == (TICKCOUNT_MAX>>1)) {
@@ -500,6 +547,10 @@ void set_eldir(int8_t dir) {
 }
 
 void setuppins(void) {
+	// Disable Watchdog
+	WDTCSR = (1<<WDCE);
+	WDTCSR = 0;
+	
 	// Configure inputs
 	AZ_A_DDR &= ~(1<<AZ_A_NUM);
 	AZ_A_PORT |= (1<<AZ_A_NUM);

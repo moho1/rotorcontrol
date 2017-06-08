@@ -187,6 +187,9 @@ typedef struct {
 	uint8_t el_gray;
 	uint8_t el_bin;
 	
+	uint8_t az_thermtrig;
+	uint8_t el_thermtrig;
+	
 	// Tick counter, needed for speed control
 	uint8_t tickcount;
 } rotorstate_t;
