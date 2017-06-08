@@ -38,6 +38,11 @@ void cmd_az(void) {
 		/* Set new degree */
 		// deg is in *10^1 to avoid floats
 		uint32_t deg = decode_deg();
+		deg += 3600;
+		deg -= AZ_OFFSET;
+		if (deg >= 3600) {
+			deg -= 3600;
+		}
 		if (deg <= 1800) {
 			uint32_t steps = deg * AZ_SCALE;
 			steps /= 10;
@@ -49,6 +54,10 @@ void cmd_az(void) {
 	uint32_t steps = (uint32_t)rotorstate.azsteps;
 	steps *= 10;
 	uint32_t deg = (uint32_t)(steps / AZ_SCALE);
+	deg += AZ_OFFSET;
+	if (deg >= 3600) {
+		deg -= 3600;
+	}
 	uint8_t degs[5];
 	uint8_t length = encode_deg(deg, degs, 5);
 	uint8_t retstr[] = "AZXXX.X";
@@ -65,6 +74,11 @@ void cmd_el(void) {
 		/* Set new degree */
 		// deg is in *10^1 to avoid floats
 		uint32_t deg = decode_deg();
+		deg += 3600;
+		deg -= EL_OFFSET;
+		if (deg >= 3600) {
+			deg -= 3600;
+		}
 		if (deg <= 400) {
 			uint32_t steps = deg * EL_SCALE;
 			steps /= 10;
@@ -75,6 +89,10 @@ void cmd_el(void) {
 	uint32_t steps = (uint32_t)rotorstate.elsteps;
 	steps *= 10;
 	uint32_t deg = (uint32_t)(steps / EL_SCALE);
+	deg += EL_OFFSET;
+	if (deg >= 3600) {
+		deg -= 3600;
+	}
 	uint8_t degs[5];
 	uint8_t length = encode_deg(deg, degs, 5);
 	uint8_t retstr[] = "ELXXX.X";

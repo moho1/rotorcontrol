@@ -123,7 +123,12 @@ volatile uint8_t rxbuffread, rxbuffwrite;
 #define AZ_MAXSTEPS (180 * AZ_SCALE)
 #define EL_MAXSTEPS (40 * EL_SCALE)
 
-char versionstr[] = "VErotorcontrol0.2";
+// Offset to zero with one trailing 0. Only positve values.
+// e.g. 180 => 1800
+#define AZ_OFFSET 0
+#define EL_OFFSET 0
+
+char versionstr[] = "VErotorcontrol1.0";
 
 // Max tickcounter, needed for speedcontrol
 #define TICKCOUNT_MAX 100
