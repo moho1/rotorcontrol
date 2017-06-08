@@ -479,28 +479,42 @@ void home(void) {
 }
 
 void homeaz(void) {
-	if ((AZ_SW_PIN & (1<<AZ_SW_NUM))>>AZ_SW_NUM == SW_HIT_END) {
-		set_azdir(AZ_CW*AZ_ENCDIR);
-		set_azspeed(MAXSPEED);
-		while ((AZ_SW_PIN & (1<<AZ_SW_NUM))>>AZ_SW_NUM == SW_HIT_END);
-	} else {
-		set_azdir(AZ_CCW*AZ_ENCDIR);
-		set_azspeed(MAXSPEED);
-		while ((AZ_SW_PIN & (1<<AZ_SW_NUM))>>AZ_SW_NUM != SW_HIT_END);
-	}
+	// Move out of the endswitch
+	set_azdir(AZ_CW*AZ_ENCDIR);
+	set_azspeed(MAXSPEED);
+	while ((AZ_SW_PIN & (1<<AZ_SW_NUM))>>AZ_SW_NUM == SW_HIT_END);
+	set_azspeed(0);
+	
+	// Move in the endswitch
+	set_azdir(AZ_CCW*AZ_ENCDIR);
+	set_azspeed(MAXSPEED);
+	while ((AZ_SW_PIN & (1<<AZ_SW_NUM))>>AZ_SW_NUM != SW_HIT_END);
+	set_azspeed(0);
+	
+	// Slowly move out of the endswitch
+	set_azdir(AZ_CW*AZ_ENCDIR);
+	set_azspeed(1);
+	while ((AZ_SW_PIN & (1<<AZ_SW_NUM))>>AZ_SW_NUM == SW_HIT_END);
 	set_azspeed(0);
 }
 
 void homeel(void) {
-	if ((EL_SW_PIN & (1<<EL_SW_NUM))>>EL_SW_NUM == SW_HIT_END) {
-		set_eldir(EL_UP*EL_ENCDIR);
-		set_elspeed(MAXSPEED);
-		while ((EL_SW_PIN & (1<<EL_SW_NUM))>>EL_SW_NUM == SW_HIT_END);
-	} else {
-		set_eldir(EL_DN*EL_ENCDIR);
-		set_elspeed(MAXSPEED);
-		while ((EL_SW_PIN & (1<<EL_SW_NUM))>>EL_SW_NUM != SW_HIT_END);
-	}
+	// Move out of the endswitch
+	set_eldir(EL_UP*EL_ENCDIR);
+	set_elspeed(MAXSPEED);
+	while ((EL_SW_PIN & (1<<EL_SW_NUM))>>EL_SW_NUM == SW_HIT_END);
+	set_elspeed(0);
+	
+	// Move in the endswitch
+	set_eldir(EL_DN*EL_ENCDIR);
+	set_elspeed(MAXSPEED);
+	while ((EL_SW_PIN & (1<<EL_SW_NUM))>>EL_SW_NUM != SW_HIT_END);
+	set_elspeed(0);
+	
+	// Slowly move out of the endswitch
+	set_eldir(EL_UP*EL_ENCDIR);
+	set_elspeed(1);
+	while ((EL_SW_PIN & (1<<EL_SW_NUM))>>EL_SW_NUM == SW_HIT_END);
 	set_elspeed(0);
 }
 
