@@ -51,9 +51,9 @@ void cmd_az(void) {
 	}
 	/* Return degree */
 	
-	uint32_t steps = (uint32_t)rotorstate.azsteps;
+	int32_t steps = rotorstate.azsteps;
 	steps *= 10;
-	uint32_t deg = (uint32_t)(steps / AZ_SCALE);
+	int32_t deg = (steps / AZ_SCALE);
 	deg += AZ_OFFSET;
 	if (deg >= 3600) {
 		deg -= 3600;
@@ -86,9 +86,9 @@ void cmd_el(void) {
 		}
 	}
 	/* Return degree */
-	uint32_t steps = (uint32_t)rotorstate.elsteps;
+	int32_t steps = rotorstate.elsteps;
 	steps *= 10;
-	uint32_t deg = (uint32_t)(steps / EL_SCALE);
+	int32_t deg = (steps / EL_SCALE);
 	deg += EL_OFFSET;
 	if (deg >= 3600) {
 		deg -= 3600;
@@ -337,7 +337,7 @@ ISR( TIMER1_COMPA_vect ) {
 		if (rotorstate.azsteps > AZ_MAXSTEPS + 2*AZ_SCALE || rotorstate.azsteps < AZ_SCALE * -2) { // Overshot massively, stop and reset
 			set_azspeed(0);
 			// Trigger Watchdog
-			WDTCSR = (1<<WDE);
+			WDTCSR = (1<<WDCE) | (1<<WDE);
 			while(1);
 		}
 		if (!(rotorstate.azsteps_want > 0 && rotorstate.azsteps_want <= AZ_MAXSTEPS)) { // Well, other than this shouldn't happen, but...
@@ -349,7 +349,7 @@ ISR( TIMER1_COMPA_vect ) {
 		if (rotorstate.elsteps > EL_MAXSTEPS + 2*EL_SCALE || rotorstate.elsteps < EL_SCALE * -2) { // Overshot massively, stop and reset
 			set_elspeed(0);
 			// Trigger Watchdog
-			WDTCSR = (1<<WDE);
+			WDTCSR = (1<<WDCE) | (1<<WDE);
 			while(1);
 		}
 		if (!(rotorstate.elsteps_want > 0 && rotorstate.elsteps_want <= EL_MAXSTEPS)) { // Well, other than this shouldn't happen, but...
@@ -357,8 +357,10 @@ ISR( TIMER1_COMPA_vect ) {
 		}
 	}
 	
-	uint8_t az_therm = (AZ_TH_PIN & (1<<AZ_TH_NUM))>>AZ_TH_NUM;
-	uint8_t el_therm = (EL_TH_PIN & (1<<EL_TH_NUM))>>EL_TH_NUM;
+	// Thermal Flag is not present on this board :(
+	/*
+	uint8_t az_therm = !((AZ_TH_PIN & (1<<AZ_TH_NUM))>>AZ_TH_NUM);
+	uint8_t el_therm = !((EL_TH_PIN & (1<<EL_TH_NUM))>>EL_TH_NUM);
 	if (az_therm) {
 		if (!rotorstate.az_thermtrig) {
 			usart_write("ALthermaz");
@@ -382,8 +384,10 @@ ISR( TIMER1_COMPA_vect ) {
 		rotorstate.el_speed = 0;
 		set_azspeed(0);
 		set_elspeed(0);
+		//usart_write("ALthermshutdown");
 		return;
 	}
+	*/
 	
 	rotorstate.tickcount += 1;
 	if ( rotorstate.tickcount == (TICKCOUNT_MAX>>1)) {
@@ -566,7 +570,7 @@ void set_eldir(int8_t dir) {
 
 void setuppins(void) {
 	// Disable Watchdog
-	WDTCSR = (1<<WDCE);
+	WDTCSR = (1<<WDCE) | (1<<WDE);
 	WDTCSR = 0;
 	
 	// Configure inputs
