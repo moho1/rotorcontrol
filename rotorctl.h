@@ -142,11 +142,11 @@ uint8_t cmd_length;
 uint8_t gray2bin[4] = { 0b00, 0b01, 0b11, 0b10 };
 
 /* Speed tables */
-#define MAXSPEED 5
+#define MAXSPEED 4
 // Min difference to engage higher speed
-uint16_t speedsteps[MAXSPEED+1] = { 0, 1, 10, 50, 200, 1000 };
+uint16_t speedsteps[MAXSPEED+1] = { 0, 100, 200, 500, 1000 };
 // Speed for each difference step
-uint16_t speedpresets[MAXSPEED+1] = {0, 20, 50, 100, 200, 255};
+uint16_t speedpresets[MAXSPEED+1] = {0, 100, 150, 200, 255};
 
 /* Variables */
 

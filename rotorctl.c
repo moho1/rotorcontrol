@@ -399,7 +399,7 @@ ISR( TIMER1_COMPA_vect ) {
 		// half of max tickcount
 		// renew az speed
 		int32_t azdiff = rotorstate.azsteps_want - rotorstate.azsteps;
-		if (int32abs(azdiff) <= 20) {
+		if (int32abs(azdiff) <= 100) {
 			//usart_write("diff 0");
 			if (rotorstate.az_speed == 0) {
 				// All well
@@ -447,7 +447,7 @@ ISR( TIMER1_COMPA_vect ) {
 		int32_t eldiff = rotorstate.elsteps_want - rotorstate.elsteps;
 		//usart_transmit(eldiff + '0');
 		//usart_write("");
-		if (int32abs(eldiff) <= 20) {
+		if (int32abs(eldiff) <= 100) {
 			if (rotorstate.el_speed == 0) {
 				// All well
 			} else { 
