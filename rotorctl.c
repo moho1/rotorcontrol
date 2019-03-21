@@ -7,7 +7,9 @@
 int main(void) {
 	usart_init();
 	setuppins();
+	usart_write("Homeing");
 	home();
+	usart_write("Homed");
 	setuprotor();
 	easycomm();
 	return 0;
@@ -281,6 +283,9 @@ ISR( TIMER1_COMPA_vect ) {
 	uint8_t el_b = (EL_B_PIN & (1<<EL_B_NUM))>>EL_B_NUM;
 	rotorstate.el_gray = el_a | (el_b<<1);
 	rotorstate.el_bin = gray2bin[rotorstate.el_gray];
+	//usart_transmit(rotorstate.el_gray + '0');
+	//usart_transmit(rotorstate.el_bin + '0');
+	//usart_write("");
 	
 	// Update Azimuth if rotor has moved
 	if ((rotorstate.az_bin == 0 && rotorstate.az_bin_old == 3) ||
@@ -394,7 +399,7 @@ ISR( TIMER1_COMPA_vect ) {
 		// half of max tickcount
 		// renew az speed
 		int32_t azdiff = rotorstate.azsteps_want - rotorstate.azsteps;
-		if (int32abs(azdiff) <= 10) {
+		if (int32abs(azdiff) <= 20) {
 			//usart_write("diff 0");
 			if (rotorstate.az_speed == 0) {
 				// All well
@@ -440,7 +445,9 @@ ISR( TIMER1_COMPA_vect ) {
 		rotorstate.tickcount = 0;
 		// renew el speed
 		int32_t eldiff = rotorstate.elsteps_want - rotorstate.elsteps;
-		if (int32abs(eldiff) <= 10) {
+		//usart_transmit(eldiff + '0');
+		//usart_write("");
+		if (int32abs(eldiff) <= 20) {
 			if (rotorstate.el_speed == 0) {
 				// All well
 			} else { 
@@ -553,6 +560,7 @@ void set_elspeed(uint8_t speed) {
 		TCCR0A |= (1<<EL_PWM_EN); // Enable output
 	}
 	EL_PWM_REG = speedpresets[speed];
+	//EL_PWM_REG = 255;
 	if (speed == 0) {
 		TCCR0A &= ~(1<<EL_PWM_EN); // Really disable output
 		EL_BRK_PORT |= (1<<EL_BRK_NUM);

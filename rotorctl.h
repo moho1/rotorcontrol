@@ -125,8 +125,8 @@ volatile uint8_t rxbuffread, rxbuffwrite;
 
 // Offset to zero with one trailing 0. Only positve values.
 // e.g. 180 => 1800
-#define AZ_OFFSET 0
-#define EL_OFFSET 0
+#define AZ_OFFSET 950
+#define EL_OFFSET 110
 
 char versionstr[] = "VErotorcontrol1.0";
 
