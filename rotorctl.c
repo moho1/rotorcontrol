@@ -11,8 +11,36 @@ int main(void) {
 	home();
 	usart_write("Homed");
 	setuprotor();
+	setdefaultpos();
 	easycomm();
 	return 0;
+}
+
+void setdefaultpos() {
+	uint32_t deg;
+	deg = AZ_DEFAULT;
+	deg += 3600;
+	deg -= AZ_OFFSET;
+	if (deg >= 3600) {
+		deg -= 3600;
+	}
+	if (deg <= 1800) {
+		uint32_t steps = deg * AZ_SCALE;
+		steps /= 10;
+		rotorstate.azsteps_want = steps;
+	}
+	
+	deg = EL_DEFAULT;
+	deg += 3600;
+	deg -= EL_OFFSET;
+	if (deg >= 3600) {
+		deg -= 3600;
+	}
+	if (deg <= 400) {
+		uint32_t steps = deg * EL_SCALE;
+		steps /= 10;
+		rotorstate.elsteps_want = steps;
+	}
 }
 
 void easycomm() {

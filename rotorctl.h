@@ -128,6 +128,12 @@ volatile uint8_t rxbuffread, rxbuffwrite;
 #define AZ_OFFSET 950
 #define EL_OFFSET 110
 
+// Default Position to aquire after homing
+// Real position honoring offset with trailing 0.
+// Currently ES'HAIL 2
+#define AZ_DEFAULT 1530
+#define EL_DEFAULT 300
+
 char versionstr[] = "VErotorcontrol1.0";
 
 // Max tickcounter, needed for speedcontrol
@@ -197,6 +203,7 @@ typedef struct {
 rotorstate_t rotorstate;
 
 int main(void);
+void setdefaultpos();
 void easycomm();
 void exec_cmd(void);
 void cmd_az(void);
